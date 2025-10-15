@@ -11,7 +11,7 @@ class AddStatusColumn extends Migration
         // $fields = [
         //     'status' => [
         //         'type'       => 'ENUM',
-        //         'constraint' => ['approved', 'pending','rejected'],
+        //         'constraint' => ['approved', 'pending','rejected','claimed'],
         //         'default'    => 'pending'
         //     ],
         // ];

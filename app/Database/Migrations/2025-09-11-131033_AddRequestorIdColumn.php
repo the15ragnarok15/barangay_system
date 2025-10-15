@@ -13,7 +13,11 @@ class AddRequestorIdColumn extends Migration
                 'type'       => 'VARCHAR',
                 'constraint' => 100,
                 'after'      => 'request_type'
-            ]
+            ],
+            'claimed_at' => [
+                'type' => 'DATETIME',
+                'null' => true,
+            ],
         ]);
     }
 
