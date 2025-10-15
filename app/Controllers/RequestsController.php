@@ -194,7 +194,6 @@ class RequestsController extends BaseController
             $data['is_canceled'] = 1;
             $request->update($id, $data);
             return redirect()->to('/resident')->with('success', $find['request_type'] . ' Canceled Successfully');
-
         } catch (Exception $e) {
             return redirect()->to('/resident')->with('error', $e->getMessage());
         }
@@ -242,7 +241,7 @@ class RequestsController extends BaseController
             $find = $request->where('id', $reqId)
                 ->where('status', 'approved')
                 ->where('is_deleted', 0)
-                ->first();
+                ->find();
             if (!$find) {
                 return redirect()->back()->with('error', 'Unable to find the approved request');
             }
@@ -255,7 +254,6 @@ class RequestsController extends BaseController
             return redirect()->to('admin/requests')->with('success', 'Request Claimed');
         } catch (Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
-
         }
     }
 

@@ -15,18 +15,20 @@
             </form>
         </div>
 
+        <!-- Filter for Document -->
         <div class="col-3 col-md-3">
             <form action="" method="get">
                 <select name="document" id="" onchange="this.form.submit()" class="form-select">
                     <option value="">Choose Request Type</option>
-                    <?php $docs = $document->findAll();
-                    foreach ($docs as $d): ?>
+                    <?php
+                    foreach ($document as $d): ?>
                         <option value="<?= $d['document_name'] ?>"><?= $d['document_name'] ?></option>
                     <?php endforeach ?>
                 </select>
             </form>
         </div>
 
+        <!-- Filter for status -->
         <div class="col-3 col-md-3">
             <form action="" method="get">
                 <select name="filter" id="" onchange="this.form.submit()" class="form-select">
@@ -64,17 +66,16 @@
                         <tr>
                             <td><?= esc(date('F d, Y - h:i A', strtotime($request['created_at']))) ?></td>
                             <td><?= esc($request['request_id']) ?></td>
-                            <td>
-                                <?php
-                                $doc = $document->where('document_name', $request['request_type'])->first();
-                                if ($doc) {
-                                    echo esc($doc['document_name']);
-                                } else {
-                                    echo '-';
+                            <?php
+                            $foundDoc = '-';
+                            foreach ($document as $doc) {
+                                if ($doc['document_name'] === $request['request_type']) {
+                                    $foundDoc = esc($doc['document_name']);
+                                    break;
                                 }
-                                ;
-                                ?>
-                            </td>
+                            }
+                            echo $foundDoc;
+                            ?>
                             <td><?= esc($request['firstname'] . " " . $request['middle_initial'] . " " . $request['lastname'] . " " . $request['suffix']) ?>
                             </td>
                             <td><?= esc($request['sex']) ?></td>
@@ -105,8 +106,8 @@
                             ?>
                             <td><span class="badge text-bg-<?= $color ?> text-white"><?= ucfirst($status) ?></span></td>
                             <td><?php
-                            switch ($status):
-                                case 'pending': ?>
+                                switch ($status):
+                                    case 'pending': ?>
                                         <div class="d-flex justify-content-center">
                                             <button class="btn btn-success btn-sm"
                                                 style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;"
@@ -124,7 +125,8 @@
                                         </div>
                                         <?php break; ?>
 
-                                    <?php case 'approved': ?>
+                                    <?php
+                                    case 'approved': ?>
                                         <div class="d-flex justify-content-center">
                                             <button class="btn btn-warning text-white btn-sm"
                                                 style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;"
@@ -135,13 +137,15 @@
                                         </div>
                                         <?php break; ?>
 
-                                    <?php case 'rejected': ?>
+                                    <?php
+                                    case 'rejected': ?>
                                         <div class="text-center">
                                             <span class="badge text-bg-dark px-4">None</span>
                                         </div>
                                         <?php break; ?>
 
-                                    <?php default: ?>
+                                    <?php
+                                    default: ?>
                                         <div class="text-center">
                                             <span class="badge text-bg-dark px-4">None</span>
                                         </div>
@@ -222,10 +226,10 @@
                                         <p class="fs-3 text-center text-danger">Are you sure you want to reject this request?
                                         </p>
                                         <form action="/admin/requests/reject" method="POST">
-                                        <div class="mt-3">
-                                            <label for="" class="form-label">Remarks on Rejection</label>
-                                            <textarea type="text" name="remarks" placeholder="Reason for the rejection" class="form-control"></textarea>
-                                        </div>
+                                            <div class="mt-3">
+                                                <label for="" class="form-label">Remarks on Rejection</label>
+                                                <textarea type="text" name="remarks" placeholder="Reason for the rejection" class="form-control"></textarea>
+                                            </div>
                                     </div>
                                     <div class="modal-footer">
                                         <input type="hidden" name="id" value="<?= $request['id'] ?>">

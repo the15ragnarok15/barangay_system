@@ -12,20 +12,20 @@ $routes->group('', ['filter' => 'role:admin'], function ($routes) {
     $routes->get('/admin', 'Home::index');
 
     //Requests Actions
-    $routes->get( '/admin/requests', 'Home::requests');
+    $routes->get('/admin/requests', 'Home::requests');
     $routes->post('/admin/requests/approve', 'RequestsController::approve');
     $routes->post('/admin/requests/reject', 'RequestsController::reject');
     $routes->post('/admin/requests/claim', 'RequestsController::claim');
 
     //Residents Actions
-    $routes->get( '/admin/residents', 'Home::residence');
+    $routes->get('/admin/residents', 'Home::residence');
     $routes->post('/admin/residents/add', 'UserRegisterController::store');
     $routes->post('/admin/residents/update', 'UserRegisterController::update');
     $routes->post('/admin/residents/delete', 'UserRegisterController::delete');
     $routes->post('/admin/residents/default', 'UserRegisterController::defaultPassword');
 
     //Population Actions
-    $routes->get( '/admin/population', 'Home::population');
+    $routes->get('/admin/population', 'Home::population');
     $routes->post('/admin/population', 'PopulationController::store');
     $routes->post('/admin/population/update', 'PopulationController::update');
     $routes->post('/admin/population/delete', 'PopulationController::delete');
@@ -40,10 +40,9 @@ $routes->group('', ['filter' => 'role:admin'], function ($routes) {
     //View Reports
     $routes->get('/admin/view-reports', 'Home::viewReport');
     $routes->get('/admin/generate-reports', 'PdfMakerController::index');
-
 });
 
-$routes->group('', ['filter' => 'role:resident'], function($routes){
+$routes->group('', ['filter' => 'role:resident'], function ($routes) {
 
     $routes->get('/resident', 'ResidentController::user');
     $routes->get('/resident/profile', 'ResidentController::profile');
@@ -53,13 +52,11 @@ $routes->group('', ['filter' => 'role:resident'], function($routes){
     $routes->post('/resident/request/cancel', 'RequestsController::cancel');
     $routes->post('/resident/update', 'RequestsController::update');
     $routes->get('/resident/check-notifications', 'ResidentController::checkNotifications');
-
 });
 
-$routes->get('/logout', 'LoginController::logout');    
+$routes->get('/logout', 'LoginController::logout');
 
 $routes->get('/', 'LoginController::index');
 $routes->get('/login', 'LoginController::index');
 $routes->post('/login', 'LoginController::login');
 $routes->post('/signup', 'UserRegisterController::signup');
-

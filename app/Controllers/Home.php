@@ -43,29 +43,24 @@ class Home extends BaseController
         $document = $this->request->getGet('document');
         $search = $this->request->getGet('search');
 
-
+        // Start building the query
         $query = $model->where('is_deleted', 0)
-            ->where('is_canceled', 0)->orderBy('id', 'dsc');
+            ->where('is_canceled', 0);
 
-
-        if (empty($search) && empty($document)) {
-            if (empty($status)) {
-                $status = ['pending', 'approved', 'claimed'];
-            }
-
-            if (is_array($status)) {
-                $query->whereIn('status', $status);
-            } else {
-                $query->where('status', $status);
-            }
+        // ✅ Filter by status
+        if (!empty($status)) {
+            $query->where('status', $status);
+        } else {
+            // Default statuses if no filter selected
+            $query->whereIn('status', ['pending', 'approved', 'claimed']);
         }
 
-        // ✅ FIX 2: Correctly filter by document type
+        // ✅ Filter by document type
         if (!empty($document)) {
             $query->where('request_type', $document);
         }
 
-        // ✅ FIX 3: Add search filters correctly using groupStart/groupEnd
+        // ✅ Search filter (with grouping for multiple columns)
         if (!empty($search)) {
             $query->groupStart()
                 ->like('firstname', $search)
@@ -77,14 +72,17 @@ class Home extends BaseController
                 ->groupEnd();
         }
 
-        // ✅ FIX 4: Correct sort direction 'desc' instead of 'dsc'
+        // ✅ Correct sort order
         $requests = $query->orderBy('id', 'desc')->paginate(10);
         $pager = $model->pager;
+
+        // ✅ Pass actual document list, not the model
+        $documents = $documentmodel->findAll();
 
         return view('admin/requests', [
             'pager' => $pager,
             'search' => $search,
-            'document' => $documentmodel,
+            'document' => $documents,
             'requests' => $requests,
             'status' => $status
         ]);
@@ -215,7 +213,7 @@ class Home extends BaseController
 
         $filter = $this->request->getGet('month');
 
-        
+
         if (!empty($filter)) {
             [$year, $months] = explode('-', $filter);
             $list = $requests->where('status', 'claimed')
@@ -223,7 +221,6 @@ class Home extends BaseController
                 ->where('Year(created_at)', $year)
                 ->where('MONTH(created_at)', $months)
                 ->findAll();
-
         } else {
             $list = $requests->where('status', 'claimed')->where('is_deleted', 0)->findAll();
         }
