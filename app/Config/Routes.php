@@ -40,16 +40,21 @@ $routes->group('', ['filter' => 'role:admin'], function ($routes) {
     //View Reports
     $routes->get('/admin/view-reports', 'Home::viewReport');
     $routes->get('/admin/generate-reports', 'PdfMakerController::index');
-    
+
     // Register ESP
     $routes->get('/admin/register', 'Home::viewRegister');
-    $routes->get('/admin/update-system', '::viewRegister');
+    $routes->post('/admin/update-system', 'RegisterESP::updateSystem');
 
     //Send Alert in web
     // $routes->get('/admin/send-alert', 'RegisterESP::makeAlert');
     $routes->get('admin/check-fire-notifications', 'FireCaseController::checkFireNotifications');
 
+    $routes->post('/admin/fire-case', 'FireCaseController::openNotif');
+
+    
 });
+
+$routes->get('/logout', 'LoginController::logout');
 
 $routes->group('', ['filter' => 'role:resident'], function ($routes) {
 
@@ -61,15 +66,36 @@ $routes->group('', ['filter' => 'role:resident'], function ($routes) {
     $routes->post('/resident/request/cancel', 'RequestsController::cancel');
     $routes->post('/resident/update', 'RequestsController::update');
     $routes->get('/resident/check-notifications', 'ResidentController::checkNotifications');
+
+    // $routes->get('/logout', 'LoginController::logout');
 });
 
-$routes->get('/logout', 'LoginController::logout');
 
-$routes->get('/', 'LoginController::index');
-$routes->get('/login', 'LoginController::index');
-$routes->post('/login', 'LoginController::login');
-$routes->post('/signup', 'UserRegisterController::signup');
+$routes->group('', ['filter' => 'guest'], function ($routes) {
+    $routes->get('/', 'LoginController::index');
+    $routes->get('/login', 'LoginController::index');
+    $routes->post('/login', 'LoginController::login');
+    $routes->post('/signup', 'UserRegisterController::signup');
+});
 
 
+
+//API FOR ESP TO MAKE LIVE NOTIFICATION OR ALERT
 $routes->post('api/register', 'RegisterESP::registerESP');
 $routes->post('api/make-alert', 'RegisterESP::makeAlert');
+
+
+// $routes->get('api/send-sms', function (){
+//     $cpnum = '+639692334647';
+//     $message = 'SMS TESTING USING CODEIGNITER 4.';
+//     return sendTextBeeSMS($cpnum, $message);
+// });
+
+// $routes->get('api/send-sms-test', function (){
+//     helper('sms_helper');
+
+//     $cpnum = '+639692334647';
+//     $message = 'SMS TESTING USING CODEIGNITER 4.';
+//     $sent = sendTextBeeSMS($cpnum, $message);
+//     return $sent;
+// });

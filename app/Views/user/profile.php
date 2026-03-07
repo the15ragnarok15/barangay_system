@@ -1,5 +1,5 @@
 <?php $this->extend('user/layout/layout'); ?>
-<?php $this->section('title'); ?> Welcome nig <?php $this->endSection(); ?>
+<?php $this->section('title'); ?> Welcome<?php $this->endSection(); ?>
 <?php $this->section('profile') ?>fw-bold border-bottom border-orange border-2<?php $this->endSection() ?>
 <?php $this->section('body') ?>
 <div class="container">
@@ -48,7 +48,7 @@
             <!-- User Info Tab -->
             <div class="tab-pane fade show active" id="info" role="tabpanel" aria-labelledby="info-tab" tabindex="0">
                 <div class="img-preview-container">
-                    <img src="<?= base_url(esc($user['photo'])) ?>" alt="Profile Picture"
+                    <img src="<?= base_url($user['photo'] ?? 'public/uploads/no_photo.png') ?>" alt="Profile Picture"
                         class="rounded-circle border border-orange border-4" width="150" />
                 </div>
 
@@ -72,7 +72,7 @@
                 <form action="/resident/profile/update" method="POST" enctype="multipart/form-data">
                     <input type="hidden" name="id" value="<?= $user['id'] ?>">
                     <div class="img-preview-container">
-                        <img src="<?= base_url(esc($user['photo'])) ?>" alt="Profile Picture"
+                        <img src="<?= base_url($user['photo'] ?? 'uploads/no_photo.png') ?>" alt="Profile Picture"
                             class="rounded-circle border border-orange border-4" width="200" style="" />
                     </div>
 

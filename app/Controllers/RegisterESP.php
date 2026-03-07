@@ -110,20 +110,92 @@ class RegisterESP extends BaseController
             ->with('success', 'System Updated Successfully');
     }
 
+    // public function makeAlert()
+    // {
+    //     date_default_timezone_set('Asia/Manila'); // Ensure correct local time
+
+    //     $data = $this->request->getJSON(true);
+    //     $id = $data['esp_id'];
+    //     $status = $data['status'];
+
+    //     if (empty($id)) {
+    //         return $this->response->setJSON([
+    //             'status' => 401,
+    //             'error' => 'Chip ID is empty'
+    //         ]);
+    //     }
+
+    //     $SystemModel = new EspSystem();
+    //     $system = $SystemModel->where('esp_id', $id)->first();
+
+    //     if (!$system) {
+    //         return $this->response->setJSON([
+    //             'status' => 404,
+    //             'error' => 'ESP ID not found.'
+    //         ]);
+    //     }
+
+    //     $model = new FireCaseModel();
+
+    //     // Check if there is already a recent "warning" alert for the same ESP
+    //     $checkRecord = $model->where('household', $system['household'])
+    //         ->where('status', $status)
+    //         ->where('exact_location', $system['address'])
+    //         ->where('is_deleted', 0)
+    //         ->where('DATE(date_occurrence)', date('Y-m-d'))
+    //         ->first();
+
+    //     if ($checkRecord) {
+    //         return $this->response->setJSON([
+    //             'status' => 400,
+    //             'error' => 'A fire alert for this ESP is already active today.'
+    //         ]);
+    //     }
+
+    //     $insert = [
+    //         'case_id' => $this->FireCaseId(),
+    //         'date_occurrence' => date('Y-m-d H:i:s'),
+    //         'date_report' => date('Y-m-d H:i:s'),
+    //         'exact_location' => $system['address'],
+    //         'cause_of_fire' => null,
+    //         'affected_households' => null,
+    //         'household' => $system['household'],
+    //         'type_of_occupancy' => null,
+    //         'casualties' => null,
+    //         'affected_individuals' => null,
+    //         'status' => $status,
+    //     ];
+
+    //     $model->insert($insert);
+
+    //     return $this->response->setJSON([
+    //         'status' => 200,
+    //         'message' => 'Alert successfully created.',
+    //         'address' => $system['address'],
+    //         'household' => $system['household'],
+    //         'alert_status' => $status
+    //     ]);
+    // }
+
     public function makeAlert()
     {
-        date_default_timezone_set('Asia/Manila'); // Ensure correct local time
+        helper('sms_helper');
+
+        date_default_timezone_set('Asia/Manila');
 
         $data = $this->request->getJSON(true);
-        $id = $data['esp_id'];
-        $status = $data['status'];
+        $id = $data['esp_id'] ?? null;
+        $status = $data['status'] ?? null;
+        $alertType = $data['gas_lvl'] ?? null;
 
-        if (empty($id)) {
+        if (empty($id) || empty($status)) {
             return $this->response->setJSON([
-                'status' => 401,
-                'error' => 'Chip ID is empty'
+                'status' => 400,
+                'error' => 'ESP ID or status is missing'
             ]);
         }
+
+
 
         $SystemModel = new EspSystem();
         $system = $SystemModel->where('esp_id', $id)->first();
@@ -137,19 +209,28 @@ class RegisterESP extends BaseController
 
         $model = new FireCaseModel();
 
-        // Check if there is already a recent "warning" alert for the same ESP
-        $checkRecord = $model->where('household', $system['household'])
-            ->where('status', $status)
+        /**
+         * 🔒 Anti-Spam: SAME ESP + SAME STATUS within 30s
+         */
+        $lastAlert = $model
+            ->where('household', $system['household'])
             ->where('exact_location', $system['address'])
+            ->where('status', $status)
             ->where('is_deleted', 0)
-            ->where('DATE(date_occurrence)', date('Y-m-d'))
+            ->orderBy('date_occurrence', 'DESC')
             ->first();
 
-        if ($checkRecord) {
-            return $this->response->setJSON([
-                'status' => 400,
-                'error' => 'A fire alert for this ESP is already active today.'
-            ]);
+        if ($lastAlert) {
+            $lastTime = strtotime($lastAlert['date_occurrence']);
+            $now = time();
+
+            if (($now - $lastTime) < 60) { //60 secs ayha mo send another alert to prevent spam, change this for any adjusment 
+                return $this->response->setJSON([
+                    'status' => 429,
+                    'error' => 'Duplicate alert blocked (same ESP and status within 1 minute)',
+                    'seconds_remaining' => 30 - ($now - $lastTime)
+                ]);
+            }
         }
 
         $insert = [
@@ -157,25 +238,27 @@ class RegisterESP extends BaseController
             'date_occurrence' => date('Y-m-d H:i:s'),
             'date_report' => date('Y-m-d H:i:s'),
             'exact_location' => $system['address'],
-            'cause_of_fire' => null,
-            'affected_households' => null,
             'household' => $system['household'],
-            'type_of_occupancy' => null,
-            'casualties' => null,
-            'affected_individuals' => null,
             'status' => $status,
+            'alert_type' => $alertType,
         ];
 
         $model->insert($insert);
 
+        $cpnum = '+639776645079';
+        $message = 'ALERT: '. ucfirst($status) . '. Fire Alarm System has detected ' . $alertType . ', Date of Occurrence: '. date('F d, Y | h:i a');
+
+        sendTextBeeSMS($cpnum, $message);
+
         return $this->response->setJSON([
             'status' => 200,
             'message' => 'Alert successfully created.',
-            'address' => $system['address'],
-            'household' => $system['household'],
+            'esp_id' => $id,
             'alert_status' => $status
         ]);
     }
+
+
 
 
     public function FireCaseId()
@@ -200,5 +283,40 @@ class RegisterESP extends BaseController
         return 'FC-' . $prefix . '-' . $newNumber;
     }
 
+
+    public function updateSystem()
+    {
+        try {
+
+            $model = new EspSystem();
+
+            $espId = $this->request->getPost('esp_id');
+            $household = $this->request->getPost('household');
+            $address = $this->request->getPost('address');
+
+
+            $esp = $model->where('esp_id', $espId)->first();
+
+            if (!$esp) {
+                return redirect()->back()->withInput()->with('error', 'Esp Not Found.');
+            }
+
+            $data = [
+                'household' => $household,
+                'address' => $address
+            ];
+
+            $update = $model->update($esp['id'], $data);
+
+            if (!$update) {
+                return redirect()->back()->withInput()->with('error', 'Failed to Update.');
+            }
+
+            return redirect()->back()->withInput()->with('success', 'ESP Updated Successfully!');
+
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
+    }
 
 }

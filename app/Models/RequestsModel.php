@@ -28,6 +28,8 @@ class RequestsModel extends Model
         'is_deleted',
         'is_canceled',
         'claimed_at',
+        'payment_method',
+        'gcash_proof',
         'rejection_remarks',
         'notified',
 

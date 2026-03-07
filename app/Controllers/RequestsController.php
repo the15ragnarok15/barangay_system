@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Controllers\BaseController;
+use App\Models\RequestFilesModel;
 use App\Models\RequestsModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\I18n\Time;
@@ -14,78 +15,138 @@ class RequestsController extends BaseController
     public function store()
     {
         try {
-            $model = new RequestsModel;
+            $model = new RequestsModel();
+            $fileModel = new RequestFilesModel(); // NEW MODEL
             $validation = Services::validation();
 
+            /* =========================
+         * VALIDATION
+         * ========================= */
             $rules = [
-                'request_type' => 'required',
-                'firstname' => 'required',
-                'middle_initial' => 'permit_empty',
-                'lastname' => 'required',
-                'suffix' => 'permit_empty',
-                'sex' => 'required',
-                'purok' => 'required',
-                'contact_no' => 'required',
-                'photo' => 'permit_empty|is_image[photo]|mime_in[photo,image/jpg,image/jpeg,image/png,image/webp]|max_size[photo,2048]',
+                'request_type'   => 'required',
+                'firstname'      => 'required',
+                'lastname'       => 'required',
+                'sex'            => 'required',
+                'purok'          => 'required',
+                'contact_no'     => 'required',
+                'payment_method' => 'required',
+                'gcash_proof'    => 'permit_empty|is_image[gcash_proof]|mime_in[gcash_proof,image/jpg,image/jpeg,image/png,image/webp]|max_size[gcash_proof,2048]'
             ];
 
             if (!$this->validate($rules)) {
-                return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+                return redirect()->back()
+                    ->withInput()
+                    ->with('errors', $this->validator->getErrors());
             }
 
+            /* =========================
+         * DAILY REQUEST LIMIT (3)
+         * ========================= */
             $today = date('Y-m-d');
             $requestor_id = session()->get('user_id');
-            $request = $model->where('created_at >=', $today . ' 00:00:00')
+
+            $count = $model->where('requestor_id', $requestor_id)
+                ->where('created_at >=', $today . ' 00:00:00')
                 ->where('created_at <=', $today . ' 23:59:59')
-                ->where('requestor_id', $requestor_id)
                 ->countAllResults();
-            if ($request >= 3) {
-                return redirect()->to('/resident')->with('error', 'You have reached the maximum of 3 requests for today.');
+
+            $incoming = count($this->request->getPost('request_type'));
+
+            if (($count + $incoming) > 3) {
+                return redirect()->to('/resident')
+                    ->with('error', 'You can only make up to 3 requests per day.');
             }
 
-            $user_id = $requestor_id;
-            $request_id = "REQ-" . uniqid();
+            /* =========================
+         * PAYMENT HANDLING
+         * ========================= */
+            $paymentMethod = $this->request->getPost('payment_method');
+            $gcashProofPath = null;
 
-            $uploadPath = 'uploads/avatar/' . $user_id . '/requirements/' . $request_id . '/';
-            $fullPath = FCPATH . $uploadPath;
+            if ($paymentMethod === 'gcash') {
 
-            if (!is_dir($fullPath)) {
-                mkdir($fullPath, 0755, true);
+                $proof = $this->request->getFile('gcash_proof');
+
+                if ($proof && $proof->isValid() && !$proof->hasMoved()) {
+
+                    $uploadPath = FCPATH . 'uploads/gcash/';
+
+                    if (!is_dir($uploadPath)) {
+                        mkdir($uploadPath, 0755, true);
+                    }
+
+                    $proofName = $proof->getRandomName();
+                    $proof->move($uploadPath, $proofName); // ✅ PASS FILENAME
+
+                    $gcashProofPath = 'uploads/gcash/' . $proofName;
+                }
             }
 
-            $img = $this->request->getFile('photo');
+            /* =========================
+         * MULTIPLE REQUESTS
+         * ========================= */
+            $types  = $this->request->getPost('request_type');
+            $photos = $this->request->getFiles()['photos'];
 
-            if ($img && $img->isValid() && !$img->hasMoved()) {
-                $imgName = $img->getRandomName();
-                $img->move($fullPath, $imgName);
-                $photoPath = $uploadPath . $imgName;
-            } else {
+            foreach ($types as $index => $type) {
 
-                $photoPath = 'uploads/No_image.png';
+                $request_id = 'REQ-' . uniqid();
+
+                /* ===== CREATE REQUEST ===== */
+                $requestData = [
+                    'request_id'     => $request_id,
+                    'requestor_id'   => $requestor_id,
+                    'request_type'   => $type,
+                    'firstname'      => $this->request->getPost('firstname'),
+                    'middle_initial' => $this->request->getPost('middle_initial'),
+                    'lastname'       => $this->request->getPost('lastname'),
+                    'suffix'         => $this->request->getPost('suffix'),
+                    'sex'            => $this->request->getPost('sex'),
+                    'purok'          => $this->request->getPost('purok'),
+                    'contact_no'     => $this->request->getPost('contact_no'),
+                    'payment_method' => $paymentMethod,
+                    'gcash_proof'    => $gcashProofPath,
+                    'status'         => 'pending'
+                ];
+
+                $model->insert($requestData);
+                $dbRequestId = $model->getInsertID();
+
+                /* =========================
+             * MULTIPLE IMAGES PER REQUEST
+             * ========================= */
+                if (isset($photos[$index])) {
+
+                    $uploadPath = 'uploads/avatar/' . $requestor_id . '/requirements/' . $request_id . '/';
+                    $fullPath = FCPATH . $uploadPath;
+
+                    if (!is_dir($fullPath)) {
+                        mkdir($fullPath, 0755, true);
+                    }
+
+                    foreach ($photos[$index] as $img) {
+                        if ($img->isValid() && !$img->hasMoved()) {
+
+                            $imgName = $img->getRandomName();
+                            $img->move($fullPath, $imgName);
+
+                            $fileModel->insert([
+                                'request_id' => $dbRequestId,
+                                'file_path' => $uploadPath . $imgName
+                            ]);
+                        }
+                    }
+                }
             }
-
-            $data = [
-                'request_id' => $request_id,
-                'requestor_id' => $requestor_id,
-                'request_type' => $this->request->getPost('request_type'),
-                'firstname' => $this->request->getPost('firstname'),
-                'middle_initial' => $this->request->getPost('middle_initial'),
-                'lastname' => $this->request->getPost('lastname'),
-                'suffix' => $this->request->getPost('suffix'),
-                'sex' => $this->request->getPost('sex'),
-                'purok' => $this->request->getPost('purok'),
-                'contact_no' => $this->request->getPost('contact_no'),
-                'photo' => $photoPath,
-            ];
-
-            $model->save($data);
 
             return redirect()->to('/resident')
-                ->with('success', $request_id . ' Requested Successfully');
-        } catch (Exception $e) {
-            return redirect()->to('/resident')->with('error', $e->getMessage());
+                ->with('success', 'Request(s) submitted successfully.');
+        } catch (\Throwable $e) {
+            return redirect()->to('/resident')
+                ->with('error', $e->getMessage());
         }
     }
+
 
     public function update()
     {

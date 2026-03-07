@@ -73,11 +73,20 @@
                     <h4 class="modal-title text-white">Generate Reports</h4>
                     <span class="btn btn-close" data-bs-dismiss="modal"></span>
                 </div>
-                <form action="/admin/generate-reports" method="get">
+                <form action="/admin/generate-reports" target="_blank" method="get">
                     <div class="modal-body">
                         <div class="">
                             <label for="" class="form-label">Select Month to Generate Reports</label>
                             <input type="month" name="month" class="form-control" required>
+                        </div>
+                        <div class="">
+                            <label for="" class="form-label">Select Document Type to Generate Reports</label>
+                            <select class="form-select" name="document" id="">
+                                <option value="Community Tax Certificate (CTC)">Community Tax Certificate (CTC)</option>
+                                <option value="Barangay Certification (Old Resident)">Barangay Certification (Old Resident)</option>
+                                <option value="Barangay Certification (New Resident)">Barangay Certification (New Resident)</option>
+                                <option value="Barangay Clearance">Barangay Clearance</option>
+                            </select>
                         </div>
                     </div>
                     <div class="modal-footer">

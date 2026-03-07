@@ -45,10 +45,10 @@
 
     <div class="table-responsive" style="height: 65vh;">
         <table class="table table-striped">
-            <thead class="sticky-top table-dark">
+            <thead class=" table-dark">
                 <tr>
                     <th>Date Requested</th>
-                    <th>Request ID</th>
+                    <!-- <th>Request ID</th> -->
                     <th>Document</th>
                     <th>Requestor</th>
                     <th>Sex</th>
@@ -56,6 +56,7 @@
                     <th>Contact</th>
                     <th>Photo</th>
                     <th>Fee</th>
+                    <th>Payment Method</th>
                     <th>Status</th>
                     <th class="text-center">Action</th>
                 </tr>
@@ -65,17 +66,17 @@
                     <?php foreach ($requests as $request): ?>
                         <tr>
                             <td><?= esc(date('F d, Y - h:i A', strtotime($request['created_at']))) ?></td>
-                            <td><?= esc($request['request_id']) ?></td>
-                            <?php
-                            $foundDoc = '-';
-                            foreach ($document as $doc) {
-                                if ($doc['document_name'] === $request['request_type']) {
-                                    $foundDoc = esc($doc['document_name']);
-                                    break;
+                            <!-- <td><?= esc($request['request_id']) ?></td> -->
+                            <td><?php
+                                $foundDoc = '-';
+                                foreach ($document as $doc) {
+                                    if ($doc['document_name'] === $request['request_type']) {
+                                        $foundDoc = esc($doc['document_name']);
+                                        break;
+                                    }
                                 }
-                            }
-                            echo $foundDoc;
-                            ?>
+                                echo $foundDoc;
+                                ?></td>
                             <td><?= esc($request['firstname'] . " " . $request['middle_initial'] . " " . $request['lastname'] . " " . $request['suffix']) ?>
                             </td>
                             <td><?= esc($request['sex']) ?></td>
@@ -86,6 +87,13 @@
                                     data-bs-target="#img_<?= $request['request_id'] ?>" data-bs-toggle="modal">View</button>
                             </td>
                             <td>P<?= esc(number_format($doc['fee'], 2)) ?></td>
+                            <td class="text-center">
+                                <?php if (esc($request['payment_method'] == 'walk-in')): ?>
+                                    <strong>Walk-in</strong>
+                                <?php else : ?>
+                                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#gcash<?= $request['id'] ?>">Gcash</button>
+                                <?php endif; ?>
+                            </td>
                             <?php
                             $color = null;
                             $status = esc($request['status']);
@@ -105,6 +113,7 @@
                             }
                             ?>
                             <td><span class="badge text-bg-<?= $color ?> text-white"><?= ucfirst($status) ?></span></td>
+                            
                             <td><?php
                                 switch ($status):
                                     case 'pending': ?>
@@ -154,6 +163,21 @@
 
                         </tr>
 
+                        <!-- Gcash Proof Modal -->
+                        <div class="modal fade" id="gcash<?= esc($request['id']) ?>">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-primary">
+                                        <h4 class="text-white">GCASH Reference No.</h4>
+                                        <span class="btn btn-close" data-bs-dismiss="modal"></span>
+                                    </div>
+                                    <div class="modal-body">
+                                        <img src="<?= base_url(esc($request['gcash_proof'] ?? '')) ?>" alt="" class="img-fluid mb-2">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!--View Requirement Modal-->
                         <div class="modal fade" id="img_<?= $request['request_id'] ?>">
                             <div class="modal-dialog">
@@ -164,8 +188,16 @@
                                     </div>
                                     <div class="modal-body text-center">
                                         <picture>
-                                            <img src="<?= base_url($request['photo'] ?? '') ?>" alt="No Photo" width="450">
-                                        </picture>
+                                            <picture>
+                                                <!-- <img src="<?= base_url($request['photo'] ?? '') ?>" alt="No Photo" width="450"> -->
+                                                <?php
+                                                $dbcon = db_connect();
+                                                $files = $dbcon->table('request_files')->where('request_id', $request['id'])->get()->getResultArray();
+
+                                                foreach ($files as $file) : ?>
+                                                    <img src="<?= base_url($file['file_path']) ?>" alt="" class="img-fluid mb-2">
+                                                <?php endforeach; ?>
+                                            </picture>
                                     </div>
                                 </div>
                             </div>

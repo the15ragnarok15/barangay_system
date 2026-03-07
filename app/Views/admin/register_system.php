@@ -39,8 +39,9 @@
                                     <button type="button" class="btn-close btn-close-white"
                                         data-bs-dismiss="modal"></button>
                                 </div>
-                                <form action="" method="POST">
+                                <form action="/admin/update-system" method="POST">
                                     <div class="modal-body">
+                                        <input type="hidden" value="<?= esc($d['esp_id']) ?>" name="esp_id">
                                         <div class="mb-3">
                                             <label class="form-label">Household</label>
                                             <input type="text" name="household" value="<?= esc($d['household']) ?>"
@@ -54,7 +55,7 @@
                                     </div>
                                     <div class="modal-footer">
                                         <button class="btn btn-primary">Update</button>
-                                        <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancel</button>
+                                        <span class="btn btn-danger" data-bs-dismiss="modal">Cancel</span>
                                     </div>
                                 </form>
                             </div>

@@ -176,4 +176,15 @@ class FireCaseController extends BaseController
         ]);
     }
 
+    public function openNotif()
+    {
+        $caseId = $this->request->getPost('id');
+        $fireModel = new FireCaseModel();
+
+        $findCase = $fireModel->where('id', $caseId)->where('is_open', 0)->first();
+        
+        $fireModel->update($findCase['id'], ['is_open'=> 1]);
+
+        return redirect()->to('/admin/fire-list');
+    }
 }

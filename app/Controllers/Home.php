@@ -93,7 +93,7 @@ class Home extends BaseController
     public function residence(): string
     {
         $residents = new RegisterUserModel();
-        $query = $residents->where('is_deleted', 0);
+        $query = $residents->where('is_deleted', 0)->orderBy('created_at', 'desc');
         $search = $this->request->getGet('search');
         if ($search) {
             $query = $query

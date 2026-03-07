@@ -13,17 +13,19 @@ class PdfMakerController extends BaseController
     public function index()
     {
         try {
+            $document = $this->request->getGet('document');
             $filter = $this->request->getGet('month');
             [$year, $month] = explode('-', $filter);
             $request = new RequestsModel();
 
             $query = $request->where('status', 'claimed')
+                                 ->where('request_type', $document)
                                  ->where('is_deleted', 0)
                                  ->where('YEAR(created_at)', $year)
                                  ->where('MONTH(created_at)', $month)->findAll();
 
             
-            $html = view('admin/pdf/pdf_layout', ['requests' => $query, 'month'=>$filter]);
+            $html = view('admin/pdf/pdf_layout', ['requests' => $query, 'month'=>$filter, 'document'=>$document]);
 
             $options = new Options();
             $options->set('isRemoteEnabled', true); //To allow external images or CSS

@@ -47,10 +47,10 @@ class LoginController extends BaseController
                     return redirect()->to('/admin');
                 } elseif ($user['role'] == 'resident') {
                     session()->set([
-                        'user' => $user,
-                        'user_id' => $user['user_id'],
-                        'username' => $user['username'], 
-                        'role' => 'resident',
+                        'user'      => $user,
+                        'user_id'   => $user['user_id'],
+                        'username'  => $user['username'], 
+                        'role'      => 'resident',
                         'isLoggedIn' => true
                     ]);
                     return redirect()->to('/resident');
@@ -69,7 +69,7 @@ class LoginController extends BaseController
     public function logout()
     {
         session()->destroy();
-        return redirect()->to('/login');
+        return redirect()->to('/');
     }
 
 }

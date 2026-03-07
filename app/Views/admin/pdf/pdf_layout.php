@@ -100,7 +100,7 @@
 
     <!-- Report Title -->
     <div class="report-title">
-        Monthly Report – <?= esc(date('F Y', strtotime($month))) ?>
+        Monthly Report – <?= esc(date('F Y', strtotime($month))) ?> : (<strong><?= esc($document) ?></strong>)
     </div>
 
     <!-- Report Table -->
@@ -133,6 +133,19 @@
             <?php endforeach; ?>
         </tbody>
     </table>
+
+
+    <div style="margin-top:70px; text-align:center; white-space:nowrap;">
+    <strong>Approved By:</strong>
+    <span style="display:inline-block; width:150px; border-bottom:1px solid #000; height:18px; vertical-align:middle;"></span>
+
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+    <strong>Prepared By:</strong>
+    <span style="display:inline-block; width:150px; border-bottom:1px solid #000; height:18px; vertical-align:middle;"></span>
+</div>
+
+
 
     <!-- Footer -->
     <div class="footer">

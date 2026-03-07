@@ -25,9 +25,10 @@ class FireCaseModel extends Model
         'household',
         'is_deleted',
         'alarm',
+        'alert_type',
         'status',
         'is_notified',
-
+        'is_open',
     ];
 
     protected bool $allowEmptyInserts = false;

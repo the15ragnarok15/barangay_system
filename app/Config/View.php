@@ -21,6 +21,7 @@ class View extends BaseView
      *
      * @var bool
      */
+    public string $appOverridesFolder = 'Views';
     public $saveData = true;
 
     /**

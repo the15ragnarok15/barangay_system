@@ -1,5 +1,5 @@
 <?php $this->extend('user/layout/layout'); ?>
-<?php $this->section('title'); ?> Welcome nig <?php $this->endSection(); ?>
+<?php $this->section('title'); ?> Welcome<?php $this->endSection(); ?>
 <?php $this->section('home') ?>fw-bold border-bottom border-orange border-2<?php $this->endSection() ?>
 <?php $this->section('body') ?>
 <div class="mx-5 mt-4">
@@ -43,7 +43,7 @@
             <thead class="sticky-top table-dark">
                 <tr>
                     <th>Date Requested</th>
-                    <th>Request ID</th>
+                    <!-- <th>Request ID</th> -->
                     <th>Document</th>
                     <th>Requestor</th>
                     <th>Sex</th>
@@ -51,6 +51,7 @@
                     <th>Contact</th>
                     <th>Photo</th>
                     <th>Fee</th>
+                    <th>Payment Method</th>
                     <th>Status</th>
                     <th class="text-center">Action</th>
                 </tr>
@@ -79,7 +80,7 @@
                         ?>
                         <tr>
                             <td><?= esc(date('F d, Y  h:i A', strtotime($request['created_at']))) ?></td>
-                            <td><?= esc($request['request_id']) ?></td>
+                            <!-- <td><?= esc($request['request_id']) ?></td> -->
                             <td>
                                 <?php
                                 $doc = $document->where('document_name', $request['request_type'])->first();
@@ -97,6 +98,13 @@
                                     data-bs-toggle="modal">View</button>
                             </td>
                             <td>P<?= esc(number_format($doc['fee'] ?? 0, 2)) ?></td>
+                            <td class="text-center">
+                                <?php if (esc($request['payment_method'] == 'walk-in')): ?>
+                                    <strong>Walk-in</strong>
+                                <?php else : ?>
+                                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#gcash<?= $request['id'] ?>">Gcash</button>
+                                <?php endif; ?>
+                            </td>
                             <td>
                                 <span class="badge text-bg-<?= $badgeColor ?> text-white">
                                     <?= esc($badgeText) ?>
@@ -140,6 +148,20 @@
                             </td>
                         </tr>
 
+                        <!-- Gcash Proof Modal -->
+                        <div class="modal fade" id="gcash<?= esc($request['id']) ?>">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-primary">
+                                        <h4 class="text-white">GCASH Reference No.</h4>
+                                        <span class="btn btn-close" data-bs-dismiss="modal"></span>
+                                    </div>
+                                    <div class="modal-body">
+                                        <img src="<?= base_url(esc($request['gcash_proof'] ?? '')) ?>" alt="" class="img-fluid mb-2">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
                         <!--View Requirement Modal-->
                         <div class="modal fade" id="img_<?= $request['request_id'] ?>">
@@ -151,7 +173,14 @@
                                     </div>
                                     <div class="modal-body text-center">
                                         <picture>
-                                            <img src="<?= base_url($request['photo'] ?? '') ?>" alt="No Photo" width="450">
+                                            <!-- <img src="<?= base_url($request['photo'] ?? '') ?>" alt="No Photo" width="450"> -->
+                                            <?php
+                                            $dbcon = db_connect();
+                                            $files = $dbcon->table('request_files')->where('request_id', $request['id'])->get()->getResultArray();
+
+                                            foreach ($files as $file) : ?>
+                                                <img src="<?= base_url($file['file_path']) ?>" alt="" class="img-fluid mb-2">
+                                            <?php endforeach; ?>
                                         </picture>
                                     </div>
                                 </div>
@@ -228,7 +257,7 @@
 
                                             <div id="display_<?= $request['id'] ?>" class="mt-2 mb-2 fw-bold ms-3"></div>
                                             <script>
-                                                (function () {
+                                                (function() {
                                                     const requirements = {
                                                         "Barangay Certification (Old Resident)": [
                                                             "Valid ID",
@@ -345,9 +374,10 @@
             </tbody>
         </table>
     </div>
+
     <!--Make Request Modal-->
     <div class="modal fade" id="make_requests">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
             <div class="modal-content">
                 <div class="modal-header bg-orange">
                     <h4 class="text-white">Make a Request</h4>
@@ -359,18 +389,69 @@
                             <p> <strong class="text-warning">Note:</strong> You can make up to <strong>3 requests</strong> per day.</p>
                         </div>
                         <hr>
+
                         <div class="mb-2">
-                            <label for="" class="form-label">Choose Document to Request</label>
+                            <label for="" class="form-label">Choose Document to Check the Requirements:</label>
                             <select name="request_type" id="request_type" class="form-select">
                                 <?php foreach ($docs as $d): ?>
-                                    <option value="<?= $d['document_name'] ?>"><?= $d['document_name'] ?>
+                                    <option value="<?= $d['document_name'] ?>">
+                                        <?= $d['document_name'] ?>
                                     </option>
                                 <?php endforeach ?>
                             </select>
                         </div>
+                        <div id="requirements" class="mt-2 mb-2 fw-bold ms-3">
+                        </div>
+                        <hr>
+
+                        <div id="requestContainer">
+                            <h4 class="mt-3">Select Document to request:</h4>
+                            <div class="request-item border p-3 mb-3">
+                                <label class="form-label">Document Type</label>
+                                <select name="request_type[]" class="form-select" required>
+                                    <?php foreach ($docs as $d): ?>
+                                        <option value="<?= esc($d['document_name']) ?>">
+                                            <?= esc($d['document_name']) ?>
+                                        </option>
+                                    <?php endforeach ?>
+                                </select>
+
+                                <label class="form-label mt-2">Upload Requirements</label>
+                                <input type="file" name="photos[0][]" multiple class="form-control">
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn btn-secondary" onclick="addRequest()">Add Another request</button>
+
 
                         <div id="requirements" class="mt-2 mb-2 fw-bold ms-3"></div>
                         <script>
+                            let index = 1;
+
+                            function addRequest() {
+                                if (index >= 3) {
+                                    alert('Maximum of 3 requests per day.');
+                                    return;
+                                }
+
+                                document.getElementById('requestContainer').insertAdjacentHTML('beforeend', `
+                                    <div class="request-item border p-3 mb-3">
+                                        <label class="form-label">Document Type</label>
+                                        <select name="request_type[]" class="form-select" required>
+                                            <?php foreach ($docs as $d): ?>
+                                                <option value="<?= esc($d['document_name']) ?>">
+                                                    <?= esc($d['document_name']) ?>
+                                                </option>
+                                            <?php endforeach ?>
+                                        </select>
+                                            
+                                        <label class="form-label mt-2">Upload Requirements</label>
+                                        <input type="file" name="photos[${index}][]" multiple class="form-control">
+                                    </div>
+                                    `);
+
+                                index++;
+                            }
                             const requirementsMap = {
                                 "Barangay Certification (Old Resident)": [
                                     "Valid ID",
@@ -459,10 +540,41 @@
                             </div>
                         </div>
 
-                        <div class="mb-2">
+                        <!-- <div class="mb-2">
                             <label for="" class="form-label">Upload Requirements</label>
                             <input type="file" name="photo" class="form-control">
+                        </div> -->
+                        <div class="mb-3">
+                            <label class="form-label">Payment Method</label>
+                            <select name="payment_method" id="payment_method" class="form-select" required>
+                                <option value="">Select</option>
+                                <option value="walk-in">Walk-in</option>
+                                <option value="gcash">GCash</option>
+                            </select>
                         </div>
+
+                        <div class="row  d-none"  id="gcashProof">
+                            <div class="col-3 mb-3">
+                                <div class=" p-2 bg-primary rounded">
+                                    <!-- <h4 class="text-white text-center">Gcash QrCode</h4> -->
+                                    <img src="<?= base_url('uploads/Gcash.png') ?>" width="250px" alt="" class="img-fluid">
+                                </div>
+
+                            </div>
+
+                            <div class="col-9 mb-3" id="">
+                                <label class="form-label">GCash Screenshot</label>
+                                <input type="file" name="gcash_proof" class="form-control">
+                            </div>
+                        </div>
+
+                        <script>
+                            document.getElementById('payment_method').addEventListener('change', function() {
+                                document.getElementById('gcashProof')
+                                    .classList.toggle('d-none', this.value !== 'gcash');
+                            });
+                        </script>
+
                     </div>
                     <div class="modal-footer">
                         <button class="btn btn-orange text-white">Submit</button>

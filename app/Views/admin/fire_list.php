@@ -52,7 +52,7 @@
                     <th>Type of Occurancy</th>
                     <th>Casualties</th>
                     <th>Status</th>
-                    <th>Alarm</th>
+                    <th>Alarm Type</th>
                     <th class="text-center">Action</th>
                 </tr>
             </thead>
@@ -73,7 +73,7 @@
                                 <td><?= esc($case['type_of_occupancy']) ?></td>
                                 <td><?= esc($case['casualties']) ?></td>
                                 <td><span class="badge bg-<?= $case['status'] == 'warning' ? 'warning' : 'danger' ?>"><?= esc(ucfirst($case['status'])) ?></span></td>
-                                <td><?= esc($case['alarm']) ?></td>
+                                <td><strong><?= esc($case['alert_type']) ?></strong></td>
                                 <td>
                                     <div class="d-flex justify-content-center">
                                         <button class="btn btn-primary btn-sm"
@@ -123,7 +123,7 @@
 
                                                 <div class="mb-2">
                                                     <label for="" class="form-label">Cause of Fire</label>
-                                                    <input type="text" name="cause_of_fire" value="<?= esc($case['cause_of_fire']) ?>" placeholder="" class="form-control">
+                                                    <input type="text" name="cause_of_fire" value="<?= esc($case['cause_of_fire']) ?>" placeholder="Cause of fire" class="form-control">
                                                 </div>
 
                                                 <div class="row mb-2">

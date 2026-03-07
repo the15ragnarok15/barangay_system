@@ -26,7 +26,7 @@ class RoleFilter implements FilterInterface
     public function before(RequestInterface $request, $arguments = null)
     {
         if (!session()->get('isLoggedIn')) {
-            return redirect()->to('/login')->with('error', 'You must Login First');
+            return redirect()->to('/login');
         }
 
         if ($arguments && isset($arguments[0])) {

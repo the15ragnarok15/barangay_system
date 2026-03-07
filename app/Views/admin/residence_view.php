@@ -51,7 +51,7 @@
                             <td class="d-flex justify-content-center align-items-center">
                                 <a data-bs-toggle="modal" data-bs-target="#photo_<?= esc($resident['user_id']) ?>">
                                     <img class="rounded-circle"
-                                        src="<?= base_url(esc($resident['photo'])) ?>"
+                                        src="<?= base_url(esc($resident['photo']) ?? 'public/uploads/no_photo.png') ?>"
                                         width="50" alt="avatar">
                                 </a>
                             </td>
@@ -95,7 +95,7 @@
                                         <span class="btn btn-close" data-bs-dismiss="modal"></span>
                                     </div>
                                     <div class="modal-body">
-                                        <p class="fs-3 text-center text-warning">Are you sure you want to Default the Password of <?= esc($resident['firstname']) ?>?</p>
+                                        <p class="fs-3 text-center text-warning">Are you sure you want to Default the Password of <?= esc($resident['firstname']) ?>? <br> Defualt Password: "password123"</p>
                                     </div>
                                     <div class="modal-footer">
                                         <form action="/admin/residents/default" method="post">
@@ -118,7 +118,7 @@
 
                                     <div class="modal-body d-flex justify-content-center">
                                         <img class="rounded"
-                                            src="<?= base_url($resident['photo']) ?>"
+                                            src="<?= base_url(esc($resident['photo']) ?? 'public/uploads/no_photo.png') ?>"
                                             width="400" alt="No Photo">
                                     </div>
                                 </div>
