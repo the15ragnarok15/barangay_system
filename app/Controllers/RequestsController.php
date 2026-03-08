@@ -9,28 +9,188 @@ use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\I18n\Time;
 use Config\Services;
 use Exception;
+use thiagoalessio\TesseractOCR\TesseractOCR;
+
 
 class RequestsController extends BaseController
 {
+    // public function store()
+    // {
+    //     try {
+    //         $model = new RequestsModel();
+    //         $fileModel = new RequestFilesModel(); // NEW MODEL
+    //         $validation = Services::validation();
+
+    //         /* =========================
+    //          * VALIDATION
+    //          * ========================= */
+    //         $rules = [
+    //             'request_type' => 'required',
+    //             'firstname' => 'required',
+    //             'lastname' => 'required',
+    //             'sex' => 'required',
+    //             'purok' => 'required',
+    //             'contact_no' => 'required',
+    //             'payment_method' => 'required',
+    //             'gcash_proof' => 'permit_empty|is_image[gcash_proof]|mime_in[gcash_proof,image/jpg,image/jpeg,image/png,image/webp]|max_size[gcash_proof,2048]'
+    //         ];
+
+    //         if (!$this->validate($rules)) {
+    //             return redirect()->back()
+    //                 ->withInput()
+    //                 ->with('errors', $this->validator->getErrors());
+    //         }
+
+    //         /* =========================
+    //          * DAILY REQUEST LIMIT (3)
+    //          * ========================= */
+    //         $today = date('Y-m-d');
+    //         $requestor_id = session()->get('user_id');
+
+    //         $count = $model->where('requestor_id', $requestor_id)
+    //             ->where('created_at >=', $today . ' 00:00:00')
+    //             ->where('created_at <=', $today . ' 23:59:59')
+    //             ->countAllResults();
+
+    //         $incoming = count($this->request->getPost('request_type'));
+
+    //         if (($count + $incoming) > 3) {
+    //             return redirect()->to('/resident')
+    //                 ->with('error', 'You can only make up to 3 requests per day.');
+    //         }
+
+    //         /* =========================
+    //          * PAYMENT HANDLING
+    //          * ========================= */
+    //         $paymentMethod = $this->request->getPost('payment_method');
+    //         $gcashProofPath = null;
+
+    //         if ($paymentMethod === 'gcash') {
+
+    //             $proof = $this->request->getFile('gcash_proof');
+    //             $referenceFromPost = trim($this->request->getPost('reference_no'));
+
+    //             // Use Tesseract OCR for Image Validation and gettign Reference No. or verify it
+    //             // Move to temporary folder for OCR
+    //             $tempPath = WRITEPATH . 'tmp/' . $proof->getRandomName();
+    //             $proof->move(WRITEPATH . 'tmp/', basename($tempPath));
+
+    //             // Run Tesseract OCR
+    //             $getRef = (new TesseractOCR($tempPath))->lang('eng')->psm(6)->run();
+
+    //             // Extract Reference Number
+    //             if (preg_match('/Reference Number\s+([0-9]+)/i', $getRef, $matches)) {
+    //                 $reference = str_replace(['O', 'o', ' '], '0', $matches[1]);
+    //             } else {
+    //                 return redirect()->back()->with('error', 'Reference number could not be read from the receipt.');
+    //             }
+
+    //             // Compare with user input
+    //             if ($reference !== $referenceFromPost) {
+    //                 return redirect()->back()->with('error', 'The reference number does not match the receipt uploaded.');
+    //             }
+
+    //             if ($proof && $proof->isValid() && !$proof->hasMoved()) {
+
+    //                 $uploadPath = FCPATH . 'uploads/gcash/';
+
+    //                 if (!is_dir($uploadPath)) {
+    //                     mkdir($uploadPath, 0755, true);
+    //                 }
+
+    //                 $proofName = $proof->getRandomName();
+    //                 $proof->move($uploadPath, $proofName); // ✅ PASS FILENAME
+
+    //                 $gcashProofPath = 'uploads/gcash/' . $proofName;
+    //             }
+    //         }
+
+    //         /* =========================
+    //          * MULTIPLE REQUESTS
+    //          * ========================= */
+    //         $types = $this->request->getPost('request_type');
+    //         $photos = $this->request->getFiles()['photos'];
+
+    //         foreach ($types as $index => $type) {
+
+    //             $request_id = 'REQ-' . uniqid();
+
+    //             /* ===== CREATE REQUEST ===== */
+    //             $requestData = [
+    //                 'request_id' => $request_id,
+    //                 'requestor_id' => $requestor_id,
+    //                 'request_type' => $type,
+    //                 'firstname' => $this->request->getPost('firstname'),
+    //                 'middle_initial' => $this->request->getPost('middle_initial'),
+    //                 'lastname' => $this->request->getPost('lastname'),
+    //                 'suffix' => $this->request->getPost('suffix'),
+    //                 'sex' => $this->request->getPost('sex'),
+    //                 'purok' => $this->request->getPost('purok'),
+    //                 'contact_no' => $this->request->getPost('contact_no'),
+    //                 'payment_method' => $paymentMethod,
+    //                 'gcash_proof' => $gcashProofPath,
+    //                 'status' => 'pending'
+    //             ];
+
+    //             $model->insert($requestData);
+    //             $dbRequestId = $model->getInsertID();
+
+    //             /* =========================
+    //              * MULTIPLE IMAGES PER REQUEST
+    //              * ========================= */
+    //             if (isset($photos[$index])) {
+
+    //                 $uploadPath = 'uploads/avatar/' . $requestor_id . '/requirements/' . $request_id . '/';
+    //                 $fullPath = FCPATH . $uploadPath;
+
+    //                 if (!is_dir($fullPath)) {
+    //                     mkdir($fullPath, 0755, true);
+    //                 }
+
+    //                 foreach ($photos[$index] as $img) {
+    //                     if ($img->isValid() && !$img->hasMoved()) {
+
+    //                         $imgName = $img->getRandomName();
+    //                         $img->move($fullPath, $imgName);
+
+    //                         $fileModel->insert([
+    //                             'request_id' => $dbRequestId,
+    //                             'file_path' => $uploadPath . $imgName
+    //                         ]);
+    //                     }
+    //                 }
+    //             }
+    //         }
+
+    //         return redirect()->to('/resident')
+    //             ->with('success', 'Request(s) submitted successfully.');
+    //     } catch (\Throwable $e) {
+    //         return redirect()->to('/resident')
+    //             ->with('error', $e->getMessage());
+    //     }
+    // }
+
+
+    // Error in Requesting 03-08-2026
     public function store()
     {
-        try {
-            $model = new RequestsModel();
-            $fileModel = new RequestFilesModel(); // NEW MODEL
-            $validation = Services::validation();
+        $model = new RequestsModel();
+        $fileModel = new RequestFilesModel();
+        $validation = Services::validation();
 
+        try {
             /* =========================
-         * VALIDATION
-         * ========================= */
+             * VALIDATION
+             * ========================= */
             $rules = [
-                'request_type'   => 'required',
-                'firstname'      => 'required',
-                'lastname'       => 'required',
-                'sex'            => 'required',
-                'purok'          => 'required',
-                'contact_no'     => 'required',
+                'request_type' => 'required',
+                'firstname' => 'required',
+                'lastname' => 'required',
+                'sex' => 'required',
+                'purok' => 'required',
+                'contact_no' => 'required',
                 'payment_method' => 'required',
-                'gcash_proof'    => 'permit_empty|is_image[gcash_proof]|mime_in[gcash_proof,image/jpg,image/jpeg,image/png,image/webp]|max_size[gcash_proof,2048]'
+                'gcash_proof' => 'permit_empty|is_image[gcash_proof]|mime_in[gcash_proof,image/jpg,image/jpeg,image/png,image/webp]|max_size[gcash_proof,2048]'
             ];
 
             if (!$this->validate($rules)) {
@@ -40,8 +200,8 @@ class RequestsController extends BaseController
             }
 
             /* =========================
-         * DAILY REQUEST LIMIT (3)
-         * ========================= */
+             * DAILY REQUEST LIMIT (3)
+             * ========================= */
             $today = date('Y-m-d');
             $requestor_id = session()->get('user_id');
 
@@ -58,78 +218,98 @@ class RequestsController extends BaseController
             }
 
             /* =========================
-         * PAYMENT HANDLING
-         * ========================= */
+             * PAYMENT HANDLING
+             * ========================= */
             $paymentMethod = $this->request->getPost('payment_method');
             $gcashProofPath = null;
 
             if ($paymentMethod === 'gcash') {
-
                 $proof = $this->request->getFile('gcash_proof');
+                $referenceFromPost = trim($this->request->getPost('reference_no'));
 
                 if ($proof && $proof->isValid() && !$proof->hasMoved()) {
+                    // Move to temp folder for OCR
+                    $tempPath = WRITEPATH . 'tmp/' . $proof->getRandomName();
+                    $proof->move(WRITEPATH . 'tmp/', basename($tempPath));
 
-                    $uploadPath = FCPATH . 'uploads/gcash/';
+                    // Run OCR
+                    $getRef = (new TesseractOCR($tempPath))
+                        ->lang('eng')
+                        ->psm(6)
+                        ->run();
 
-                    if (!is_dir($uploadPath)) {
-                        mkdir($uploadPath, 0755, true);
+                    // Extract Reference Number
+                    if (preg_match('/Reference Number\s+([0-9]+)/i', $getRef, $matches)) {
+                        $reference = str_replace(['O', 'o', ' '], '0', $matches[1]);
+                    } else {
+                        return redirect()->back()
+                            ->withInput()
+                            ->with('error', 'Reference number could not be read from the receipt.');
                     }
 
-                    $proofName = $proof->getRandomName();
-                    $proof->move($uploadPath, $proofName); // ✅ PASS FILENAME
+                    // Compare with user input
+                    if ($reference !== $referenceFromPost) {
+                        return redirect()->back()
+                            ->withInput()
+                            ->with('error', 'The reference number does not match the receipt uploaded.');
+                    }
 
+                    // Move to final folder
+                    $uploadPath = FCPATH . 'uploads/gcash/';
+                    if (!is_dir($uploadPath))
+                        mkdir($uploadPath, 0755, true);
+                    $proofName = $proof->getRandomName();
+                    $proof->move($uploadPath, $proofName);
                     $gcashProofPath = 'uploads/gcash/' . $proofName;
+                } else {
+                    return redirect()->back()
+                        ->withInput()
+                        ->with('error', 'Invalid GCash receipt uploaded.');
                 }
             }
 
             /* =========================
-         * MULTIPLE REQUESTS
-         * ========================= */
-            $types  = $this->request->getPost('request_type');
-            $photos = $this->request->getFiles()['photos'];
+             * MULTIPLE REQUESTS
+             * ========================= */
+            $types = $this->request->getPost('request_type');
+            $photos = $this->request->getFiles()['photos'] ?? [];
 
             foreach ($types as $index => $type) {
-
                 $request_id = 'REQ-' . uniqid();
 
                 /* ===== CREATE REQUEST ===== */
                 $requestData = [
-                    'request_id'     => $request_id,
-                    'requestor_id'   => $requestor_id,
-                    'request_type'   => $type,
-                    'firstname'      => $this->request->getPost('firstname'),
+                    'request_id' => $request_id,
+                    'requestor_id' => $requestor_id,
+                    'request_type' => $type,
+                    'firstname' => $this->request->getPost('firstname'),
                     'middle_initial' => $this->request->getPost('middle_initial'),
-                    'lastname'       => $this->request->getPost('lastname'),
-                    'suffix'         => $this->request->getPost('suffix'),
-                    'sex'            => $this->request->getPost('sex'),
-                    'purok'          => $this->request->getPost('purok'),
-                    'contact_no'     => $this->request->getPost('contact_no'),
+                    'lastname' => $this->request->getPost('lastname'),
+                    'suffix' => $this->request->getPost('suffix'),
+                    'sex' => $this->request->getPost('sex'),
+                    'purok' => $this->request->getPost('purok'),
+                    'contact_no' => $this->request->getPost('contact_no'),
                     'payment_method' => $paymentMethod,
-                    'gcash_proof'    => $gcashProofPath,
-                    'status'         => 'pending'
+                    'gcash_proof' => $gcashProofPath,
+                    'status' => 'pending'
                 ];
 
                 $model->insert($requestData);
                 $dbRequestId = $model->getInsertID();
 
                 /* =========================
-             * MULTIPLE IMAGES PER REQUEST
-             * ========================= */
+                 * MULTIPLE IMAGES PER REQUEST
+                 * ========================= */
                 if (isset($photos[$index])) {
-
                     $uploadPath = 'uploads/avatar/' . $requestor_id . '/requirements/' . $request_id . '/';
                     $fullPath = FCPATH . $uploadPath;
-
-                    if (!is_dir($fullPath)) {
+                    if (!is_dir($fullPath))
                         mkdir($fullPath, 0755, true);
-                    }
 
                     foreach ($photos[$index] as $img) {
                         if ($img->isValid() && !$img->hasMoved()) {
-
                             $imgName = $img->getRandomName();
                             $img->move($fullPath, $imgName);
-
                             $fileModel->insert([
                                 'request_id' => $dbRequestId,
                                 'file_path' => $uploadPath . $imgName
@@ -141,12 +321,14 @@ class RequestsController extends BaseController
 
             return redirect()->to('/resident')
                 ->with('success', 'Request(s) submitted successfully.');
+
         } catch (\Throwable $e) {
-            return redirect()->to('/resident')
-                ->with('error', $e->getMessage());
+            // Catch all exceptions and show error
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'An error occurred: ' . $e->getMessage());
         }
     }
-
 
     public function update()
     {

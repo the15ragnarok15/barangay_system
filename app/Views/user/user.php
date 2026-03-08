@@ -384,6 +384,7 @@
                     <span class="btn btn-close" data-bs-dismiss="modal"></span>
                 </div>
                 <form action="/resident/make-request/" method="post" enctype="multipart/form-data">
+                    <?= csrf_field() ?>
                     <div class="modal-body">
                         <div class="">
                             <p> <strong class="text-warning">Note:</strong> You can make up to <strong>3 requests</strong> per day.</p>
@@ -563,8 +564,11 @@
                             </div>
 
                             <div class="col-9 mb-3" id="">
-                                <label class="form-label">GCash Screenshot</label>
-                                <input type="file" name="gcash_proof" class="form-control">
+                                <label class="form-label fw-semibold">GCash Screenshot</label>
+                                <input type="file" name="gcash_proof" class="form-control mb-3">
+                                
+                                <label class="form-label fw-semibold">GCash Reference Number</label>
+                                <input type="number" name="reference_no" class="form-control" placeholder="Reference Number">
                             </div>
                         </div>
 
