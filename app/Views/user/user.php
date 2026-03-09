@@ -149,19 +149,7 @@
                         </tr>
 
                         <!-- Gcash Proof Modal -->
-                        <div class="modal fade" id="gcash<?= esc($request['id']) ?>">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content">
-                                    <div class="modal-header bg-primary">
-                                        <h4 class="text-white">GCASH Reference No.</h4>
-                                        <span class="btn btn-close" data-bs-dismiss="modal"></span>
-                                    </div>
-                                    <div class="modal-body">
-                                        <img src="<?= base_url(esc($request['gcash_proof'] ?? '')) ?>" alt="" class="img-fluid mb-2">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+
 
                         <!--View Requirement Modal-->
                         <div class="modal fade" id="img_<?= $request['request_id'] ?>">
@@ -383,7 +371,7 @@
                     <h4 class="text-white">Make a Request</h4>
                     <span class="btn btn-close" data-bs-dismiss="modal"></span>
                 </div>
-                <form action="/resident/make-request/" method="post" enctype="multipart/form-data">
+                <form action="/resident/make-request/" method="post" enctype="multipart/form-data" id="makeRequest">
                     <?= csrf_field() ?>
                     <div class="modal-body">
                         <div class="">
@@ -553,32 +541,6 @@
                                 <option value="gcash">GCash</option>
                             </select>
                         </div>
-
-                        <div class="row  d-none"  id="gcashProof">
-                            <div class="col-3 mb-3">
-                                <div class=" p-2 bg-primary rounded">
-                                    <!-- <h4 class="text-white text-center">Gcash QrCode</h4> -->
-                                    <img src="<?= base_url('uploads/Gcash.png') ?>" width="250px" alt="" class="img-fluid">
-                                </div>
-
-                            </div>
-
-                            <div class="col-9 mb-3" id="">
-                                <label class="form-label fw-semibold">GCash Screenshot</label>
-                                <input type="file" name="gcash_proof" class="form-control mb-3">
-                                
-                                <label class="form-label fw-semibold">GCash Reference Number</label>
-                                <input type="number" name="reference_no" class="form-control" placeholder="Reference Number">
-                            </div>
-                        </div>
-
-                        <script>
-                            document.getElementById('payment_method').addEventListener('change', function() {
-                                document.getElementById('gcashProof')
-                                    .classList.toggle('d-none', this.value !== 'gcash');
-                            });
-                        </script>
-
                     </div>
                     <div class="modal-footer">
                         <button class="btn btn-orange text-white">Submit</button>
@@ -589,4 +551,8 @@
         </div>
     </div>
 </div>
+
+<script>
+    const makeRequestForm = document.getElementById('makeRequest');
+</script>
 <?php $this->endSection() ?>
